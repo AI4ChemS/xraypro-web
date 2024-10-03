@@ -225,6 +225,61 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+button_style = """
+    <style>
+    .container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: start;
+    }
+    .button {
+        display: inline-block;
+        padding: 10px 20px;
+        margin-right: 10px;
+        margin-bottom: 10px;
+        font-size: 16px;
+        font-weight: bold;
+        text-align: center;
+        text-decoration: none;
+        background-color: #333;
+        color: white;  /* This ensures text color is white */
+        border-radius: 20px;
+        vertical-align: middle;
+    }
+    .button img {
+        width: 20px;
+        height: 20px;
+        margin-right: 8px;
+        vertical-align: middle;
+    }
+    .button:hover {
+        background-color: #555;
+    }
+    /* Ensure the anchor tag inside the button has white text */
+    a.button {
+        color: white !important;
+    }
+    a.button:hover {
+        color: white !important;
+    }
+    </style>
+"""
+
+st.markdown(button_style, unsafe_allow_html=True)
+
+st.markdown("""
+    <div class="container">
+        <a href="https://arxiv.org" class="button">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/7/7a/ArXiv_logo_2022.png"> arXiv
+        </a>
+        <a href="" class="button">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg"> PDF
+        </a>
+        <a href="https://github.com/AI4ChemS/XRayPro" class="button">
+            <img src="https://cdn-icons-png.flaticon.com/512/25/25231.png"> Code
+        </a>
+    </div>
+""", unsafe_allow_html=True)
 
 model_selection = st.sidebar.radio(
     "What property are you interested in?",

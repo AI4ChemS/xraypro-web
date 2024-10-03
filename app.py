@@ -14,7 +14,6 @@ from torch.utils.data import Dataset, DataLoader, random_split
 import yaml
 import tempfile
 import os
-from pdf2image import convert_from_path
 
 from xraypro.xrayRec import loadMulti
 from xraypro.MOFormer_modded.dataset_multi import MOF_ID_Dataset_Multi
@@ -407,4 +406,18 @@ pdf_path = "figures/spider_w_cgcnn_v2.png"
 st.image(pdf_path, caption = 'Radar plot', use_column_width = True)
 
 st.title("Citation")
+
+bibtex_entry = """
+@article{XRayPro,
+  title={Connecting metal-organic framework synthesis to applications with a self-supervised multimodal model},
+  author={Sartaaj Khan and Seyed Mohamad Moosavi},
+  journal={journalName},
+  year={2024},
+  volume={volumeName},
+  pages={pagesOfJournal},
+  publisher={publisherName}
+}
+"""
+
 st.write("If you wish to cite us, please use the BibTeX below:")
+st.code(bibtex_entry, language="bibtex")

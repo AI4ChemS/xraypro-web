@@ -24,13 +24,12 @@ WEIGHTS_URL = "https://drive.google.com/drive/folders/1Yw_7y3NBrzjKt3H-jHRm7ZaCu
 
 def load_model(model_path):
     if torch.cuda.is_available():
-        model = loadModel(mode = 'cgcnn').regressionMode()
+        model = loadModel(mode = 'None').regressionMode()
         model.load_state_dict(torch.load(model_path))
         model.eval()
         return model
-    
     else:
-        model = loadModel(mode = 'cgcnn').regressionMode()
+        model = loadModel(mode = 'None').regressionMode()
         model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
         model.eval()
         return model
@@ -104,13 +103,13 @@ def predict(model, loader):
     
 def load_multi(model_path):
     if torch.cuda.is_available():
-        model = loadMulti(mode = 'cgcnn').regressionMode()
+        model = loadMulti(mode = 'None').regressionMode()
         model.load_state_dict(torch.load(model_path))
         model.eval()
         return model
     
     else:
-        model = loadMulti(mode = 'cgcnn').regressionMode()
+        model = loadMulti(mode = 'None').regressionMode()
         model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
         model.eval()
         return model

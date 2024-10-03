@@ -213,6 +213,19 @@ st.markdown("""
 <sup>1</sup> Department of Chemical Engineering and Applied Chemistry, University of Toronto
 """, unsafe_allow_html=True)
 
+st.markdown(
+    """
+    <style>
+    /* Adjust the sidebar width */
+    [data-testid="stSidebar"] {
+        width: 350px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+
 model_selection = st.sidebar.radio(
     "What property are you interested in?",
     ("CH$_4$ uptake at HP (mol/kg)", "CO$_2$ uptake at LP (mol/kg)", "Surface area (m$^2$/m$^3$)", "log(K$_H$) of CO$_2$", "Crystal density (g/cm$^3$)", "H$_2$ storage capacity (g/L)", "Band gap (eV)")
@@ -321,9 +334,8 @@ improve the predictions of local properties, self-supervised learning was done a
 
 st.write(OVERVIEW)
 
-pdf_path = "figures/Methods.pdf"
-images = convert_from_path(pdf_path, first_page = 0, last_page = 1)
-st.image(images[0], caption = 'Workflow', use_column_width = True)
+pdf_path = "figures/Methods.png"
+st.image(pdf_path, caption = 'Workflow', use_column_width = True)
 
 st.title("Does this work on any PXRD pattern?")
 DOES_IT_WORK = """
@@ -332,14 +344,12 @@ the PXRDs looking quite different from the "clean" versions from CoRE-MOF, it st
 """
 st.write(DOES_IT_WORK)
 
-pdf_path = "figures/CSDAssessment.pdf"
-images = convert_from_path(pdf_path, first_page = 0, last_page = 1)
-st.image(images[0], caption = 'CSD robustness assessment', use_column_width = True)
+pdf_path = "figures/CSDAssessment.png"
+st.image(pdf_path, caption = 'CSD robustness assessment', use_column_width = True)
 
 st.title("How does it compare to other models?")
-pdf_path = "figures/spider_w_cgcnn_v2.pdf"
-images = convert_from_path(pdf_path, first_page = 0, last_page = 1)
-st.image(images[0], caption = 'Radar plot', use_column_width = True)
+pdf_path = "figures/spider_w_cgcnn_v2.png"
+st.image(pdf_path, caption = 'Radar plot', use_column_width = True)
 
 st.title("Citation")
 st.write("If you wish to cite us, please use the BibTeX below:")

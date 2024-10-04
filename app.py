@@ -352,7 +352,7 @@ if mode_selection == "No" or mode_selection == "None":
         
         if st.button('Make prediction'):
             output = predict(model, loader)
-            st.write("Prediction: ", output)
+            st.write(f"Prediction for {model_selection}: ", output)
 
 elif mode_selection == "Yes":
     st.write("Recommendation system is active.")
@@ -376,6 +376,19 @@ elif mode_selection == "Yes":
         if st.button('What applications are good for my MOF?'):
             recs = recommend(model, loader)
             st.write(recs)
+
+zip_file_path = "examples/MOF5.zip"
+
+# Read the zip file as binary data
+with open(zip_file_path, "rb") as f:
+    zip_data = f.read()
+
+st.download_button(
+    label="Try out MOF-5!",
+    data=zip_data,
+    file_name="MOF5.zip",  # Use the appropriate file name for download
+    mime="application/zip"
+)
 
 st.title("Overview of the model")
 

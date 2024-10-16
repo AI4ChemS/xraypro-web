@@ -18,6 +18,11 @@ import os
 from xraypro.xrayRec import loadMulti
 from xraypro.MOFormer_modded.dataset_multi import MOF_ID_Dataset_Multi
 import requests
+from sklearn.manifold import TSNE
+import pickle
+import plotly.express as px
+import plotly.graph_objects as go
+from scipy.spatial import KDTree
 
 WEIGHTS_URL = "https://drive.google.com/drive/folders/1Yw_7y3NBrzjKt3H-jHRm7ZaCu0AZNjPA"
 
@@ -203,6 +208,166 @@ def recommend(model, loader):
 
     return recommendationClass
 
+def load_space():
+    with open('tSNE/all_outputs.pickle', 'rb') as handle:
+        all_outputs = pickle.load(handle)
+    with open('tSNE/all_actual.pickle', 'rb') as handle:
+        all_actual = pickle.load(handle)
+    with open('tSNE/all_regr.pickle', 'rb') as handle:
+        all_regr = pickle.load(handle)
+    with open('tSNE/all_di.pickle', 'rb') as handle:
+        all_di = pickle.load(handle)
+    with open('tSNE/all_rho.pickle', 'rb') as handle:
+        all_rho = pickle.load(handle)
+    with open('tSNE/all_en.pickle', 'rb') as handle:
+        all_en = pickle.load(handle)
+    
+    thresholds = yaml.load(open("weights/thresholds.yaml", "r"), Loader=yaml.FullLoader)
+    embeddings_tsne = np.load('tSNE/embedding_space.npy')
+
+    badMOF_col = 'lightgrey'
+    row_indices = {'darkturquoise' : [], 'teal' : [], 'mediumspringgreen' : [], 'magenta' : [], 'darkmagenta' : [], badMOF_col : []}
+
+    for bn, row in enumerate(all_regr):
+        if row[0] >= thresholds['CH4Storage']:
+            #colors.append('red')
+            row_indices['darkturquoise'].append(bn)
+
+        if row[1] >= thresholds['H2Storage']:
+            #colors.append('blue')
+            row_indices['teal'].append(bn)
+
+        if row[2] >= thresholds['XeStorage']:
+            #colors.append('green')
+            row_indices['mediumspringgreen'].append(bn)
+
+        if row[4] >= thresholds['CCapture']:
+            #colors.append('purple')
+            row_indices['magenta'].append(bn)
+        
+        if row[3] >= thresholds['DAC']:
+            #colors.append('orange')
+            row_indices['darkmagenta'].append(bn)
+
+        if (row[0] < thresholds['CH4Storage']) and (row[1] < thresholds['H2Storage']) and (row[2] < thresholds['XeStorage']) and (row[3] < thresholds['DAC']) and (row[4] < thresholds['CCapture']):
+            row_indices[badMOF_col].append(bn)
+
+    return embeddings_tsne, all_outputs, all_regr, row_indices, all_di, all_rho, all_en
+
+def interpolate_property(embeddings_tsne, new_point, all_di):
+    tree = KDTree(embeddings_tsne)
+    distances, indices = tree.query(new_point, k=5)
+    weights = 1 / (distances + 1e-8)
+    new_point_di = np.sum(weights * all_di[indices]) / np.sum(weights)
+
+    return new_point_di
+
+def tSNE_embedding(model, loader):
+    if torch.cuda.is_available():
+        device = 'cuda:0'
+    else:
+        device = 'cpu'
+
+    with torch.no_grad():
+        predictions_test = []
+        actual_test = []
+
+        for bn, (input1, input2, target) in enumerate(loader):
+            target = target[:, :6]
+            input2 = input2.unsqueeze(1).to(device)
+            input1 = input1.to(device)
+            output = model.model(input2, input1)
+            
+            pred_temp, actual_temp = [], []
+            for i, j in zip(output.cpu().detach().numpy(), target.cpu().detach().numpy()):
+                pred_temp.append(i)
+                actual_temp.append(j)
+            
+            predictions_test.append(pred_temp)
+            actual_test.append(actual_temp)
+
+        predictions_test = np.concatenate(np.array(predictions_test), axis = 0)
+        actual_test = np.concatenate(np.array(actual_test), axis = 0)
+    
+    #predictions_test is the new point to be added
+    _, all_outputs, all_regr, row_indices, all_di, all_rho, all_en = load_space()
+
+    X_with_new = np.vstack([all_outputs, predictions_test])
+    tsne = TSNE(n_components=2, perplexity=30, random_state=42)
+    X_tsne = tsne.fit_transform(X_with_new)
+
+    original_points = X_tsne[:-1]
+    new_point_tsne = X_tsne[-1]
+    badMOF_col = 'lightgrey'
+
+    unique_colors = {'darkturquoise': 'CH$_4$ storage', 'teal': 'H$_2$ storage', 'mediumspringgreen': 'Xe storage', 
+                 'magenta' : 'Carbon capture','darkmagenta' : 'DAC'} 
+    fig = go.Figure()
+
+    data = np.stack((all_di[row_indices[badMOF_col]], all_rho[row_indices[badMOF_col]], all_en[row_indices[badMOF_col]]), axis=1)
+    fig.add_trace(go.Scatter(
+        x=original_points[row_indices[badMOF_col], 0],
+        y=original_points[row_indices[badMOF_col], 1],
+        mode='markers',
+        marker=dict(size=7, color=badMOF_col, opacity=0.3),
+        hovertemplate=(
+                f'Application: Nothing interesting<br>'
+            'Pore Diameter: %{customdata[0]:.2f} Å<br>'
+            'Metal EN: %{customdata[2]:.2f}<br>'
+            'Density: %{customdata[1]:.2f} g/cm³<extra></extra>'
+            ),
+            customdata=data,
+        name='Nothing interesting',
+        showlegend=True
+    ))
+
+    # Add data points for other categories with jittered positions
+    noise_std = 4
+    for i, (colour, indices) in enumerate(row_indices.items()):
+        if colour != badMOF_col:
+            data = np.stack((all_di[row_indices[colour]], all_rho[row_indices[colour]], all_en[row_indices[colour]]), axis=1)
+
+            fig.add_trace(go.Scatter(
+                x=original_points[indices, 0] + np.random.normal(0, noise_std / (i + 1), len(indices)),
+                y=original_points[indices, 1] + np.random.normal(0, noise_std / (i + 1), len(indices)),
+                mode='markers',
+                marker=dict(size=7, color=colour, symbol='square', opacity=1),
+                hovertemplate=(
+                f'Application: {unique_colors[colour]}<br>'
+            'Pore Diameter: %{customdata[0]:.2f} Å<br>'
+            'Metal EN: %{customdata[2]:.2f}<br>'
+            'Density: %{customdata[1]:.2f} g/cm³<extra></extra>'
+            ),
+            customdata=data,
+                name=unique_colors[colour],
+                showlegend=True
+            ))
+    
+    pore_diameter_interpolate = interpolate_property(embeddings_tsne=original_points, new_point = new_point_tsne, all_di = all_di) #use KDTree to interpolate
+    density_interpolate = interpolate_property(embeddings_tsne=original_points, new_point = new_point_tsne, all_di = all_rho)
+
+    star_point = new_point_tsne.copy()
+    fig.add_trace(go.Scatter(
+        x=[star_point[0]],
+        y=[star_point[1]],
+        mode='markers',
+        marker=dict(size=20, color='red', symbol='star'),
+        hovertemplate=f'Interpolated Pore Diameter: {pore_diameter_interpolate:.2f} Å<br>'
+        f'Interpolated Density: {density_interpolate:.2f} g/cm³<extra></extra>',
+        name='Your MOF!'
+    ))
+
+    fig.update_layout(
+        width=1200,  # 21 inches * 100 pixels/inch
+        height=550,  # 13 inches * 100 pixels/inch
+        xaxis=dict(visible=False),
+        yaxis=dict(visible=False),
+        margin=dict(l=0, r=0, t=0, b=0),  # No margins
+    )
+
+    st.plotly_chart(fig)
+
+
 st.title("XRayPro: Connecting metal-organic framework synthesis to applications with a self-supervised multimodal model")
 
 st.markdown("""
@@ -376,6 +541,8 @@ elif mode_selection == "Yes":
         if st.button('What applications are good for my MOF?'):
             recs = recommend(model, loader)
             st.write(recs)
+
+            tSNE_embedding(model, loader)
 
 zip_file_path = "examples/MOF5.zip"
 

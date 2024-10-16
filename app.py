@@ -194,12 +194,12 @@ def recommend(model, loader):
 
     percentage = 15
 
-    recommendationClass['CH4 storage'] = "Promising" if uptakeHP*(1 + percentage/100) >= thresholds['CH4Storage'] else "Not promising"
-    recommendationClass['H2 storage'] = "Promising" if h2Cap*(1 + percentage/100) >= thresholds['H2Storage'] else "Not promising"
-    recommendationClass['Xe storage'] = "Promising" if xeUptake*(1 + percentage/100) >= thresholds['XeStorage'] else "Not promising"
-    recommendationClass['DAC'] = "Promising" if logKH*(1 - percentage/100) >= thresholds['DAC'] else "Not promising"
-    recommendationClass['Carbon capture'] = "Promising" if uptakeLP*(1 + percentage/100) >= thresholds['CCapture'] else "Not promising"
-    recommendationClass['Band gap'] = "Promising" if bandGap*(1 - percentage/100) <= thresholds['BandGap'] else "Not promising"
+    recommendationClass['CH4 storage'] = f"Promising ({np.round(uptakeHP*(1 + percentage/100), 2)} mol/kg)" if uptakeHP*(1 + percentage/100) >= thresholds['CH4Storage'] else f"Not Promising ({np.round(uptakeHP*(1 + percentage/100), 2)} mol/kg)"
+    recommendationClass['H2 storage'] = f"Promising ({np.round(h2Cap*(1 + percentage/100), 2)} g/L)" if h2Cap*(1 + percentage/100) >= thresholds['H2Storage'] else f"Not Promising ({np.round(h2Cap*(1 + percentage/100), 2)} g/L)"
+    recommendationClass['Xe storage'] = f"Promising ({np.round(xeUptake*(1 + percentage/100), 2)} mol/kg)" if xeUptake*(1 + percentage/100) >= thresholds['XeStorage'] else f"Not Promising ({np.round(xeUptake*(1 + percentage/100), 2)} mol/kg)"
+    recommendationClass['DAC'] = f"Promising ({np.round(logKH*(1 - percentage/100), 2)} logKH)" if logKH*(1 - percentage/100) >= thresholds['DAC'] else f"Not promising ({np.round(logKH*(1 - percentage/100), 2)} logKH)"
+    recommendationClass['Carbon capture'] = f"Promising ({np.round(uptakeLP*(1 + percentage/100), 2)} mol/kg)" if uptakeLP*(1 + percentage/100) >= thresholds['CCapture'] else f"Not promising ({np.round(uptakeLP*(1 + percentage/100), 2)} mol/kg)"
+    recommendationClass['Band gap'] = f"Promising ({np.round(bandGap*(1 - percentage/100), 2)} eV)" if bandGap*(1 - percentage/100) <= thresholds['BandGap'] else f"Not Promising ({np.round(bandGap*(1 - percentage/100), 2)} eV)"
 
     return recommendationClass
 

@@ -5,9 +5,6 @@ XRayPro is a multimodal model that accepts the powder x-ray diffraction (PXRD) p
 
 ![Methods](https://github.com/user-attachments/assets/fb2256ba-64cb-4ab4-8391-a1909b1ef576)
 
-## Demo on how to use XRayPro
-Need to record the video.
-
 ## Installation and usage
 The live Streamlit application is available here: <URL>.
 

@@ -5,7 +5,7 @@
 import collections
 import os
 import re
-import pkg_resources
+#import pkg_resources
 from typing import List
 from transformers import BertTokenizer
 from logging import getLogger

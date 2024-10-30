@@ -1,7 +1,7 @@
 ## Main
 XRayPro is a multimodal model that accepts the powder x-ray diffraction (PXRD) pattern and chemical precursors to make a wide variety of property predictions of metal-organic frameworks (MOFs), while supplementing the most feasible applications per MOF. This is a tool that is motivated by accelerating material discovery. If you are interested in more details, supplementary links have been provided below.
 
-[Code](https://github.com/AI4ChemS/XRayPro) | [Paper](URL)
+[Code](https://github.com/AI4ChemS/XRayPro) | [Paper](https://chemrxiv.org/engage/chemrxiv/article-details/671a9d9783f22e42140f2df6)
 
 ![Methods](https://github.com/user-attachments/assets/fb2256ba-64cb-4ab4-8391-a1909b1ef576)
 

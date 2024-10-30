@@ -588,14 +588,14 @@ st.image(pdf_path, caption = 'Radar plot', use_column_width = True)
 st.title("Citation")
 
 bibtex_entry = """
-@article{XRayPro,
-  title={Connecting metal-organic framework synthesis to applications with a self-supervised multimodal model},
-  author={Sartaaj Khan and Seyed Mohamad Moosavi},
-  journal={journalName},
-  year={2024},
-  volume={volumeName},
-  pages={pagesOfJournal},
-  publisher={publisherName}
+@article{khan2024connecting,
+  title = {Connecting metal-organic framework synthesis to applications with a self-supervised multimodal model},
+  author = {Khan, Sartaaj Takrim and Moosavi, Seyed Mohamad},
+  year = {2024},
+  journal = {ChemRxiv},
+  doi = {10.26434/chemrxiv-2024-mq9b4},
+  url = {https://chemrxiv.org/engage/chemrxiv/article-details/671a9d9783f22e42140f2df6},
+  note = {Preprint, not peer-reviewed}
 }
 """
 

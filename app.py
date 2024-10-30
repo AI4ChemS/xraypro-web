@@ -433,10 +433,10 @@ st.markdown(button_style, unsafe_allow_html=True)
 
 st.markdown("""
     <div class="container">
-        <a href="https://arxiv.org" class="button">
+        <a href="https://chemrxiv.org/engage/chemrxiv/article-details/671a9d9783f22e42140f2df6" class="button">
             <img src="https://upload.wikimedia.org/wikipedia/commons/7/7a/ArXiv_logo_2022.png"> arXiv
         </a>
-        <a href="" class="button">
+        <a href="https://shorturl.at/TXLu7" class="button">
             <img src="https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg"> PDF
         </a>
         <a href="https://github.com/AI4ChemS/XRayPro" class="button">

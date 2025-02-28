@@ -22,6 +22,9 @@ python -m streamlit run app.py
 
 Note: When uploading your PXRD pattern (in the form of a .xy file), please ensure that the first line has the diffractometer configurations (radiation type, wavelength, etc.)
 
+## Privacy when using web application
+Our web app tool does **NOT** store any data that is inputted into the entry fields (there is no external database for this).
+
 ## Citation
 If our work is used, please cite us with the following BibTeX entry:
 ```bibtex

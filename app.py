@@ -190,12 +190,12 @@ def recommend(model, loader):
                            'Band gap' : None
                            }
     
-    uptakeHP = predictions_test[0][0]
-    h2Cap = predictions_test[0][1]
-    xeUptake = predictions_test[0][2]
+    uptakeHP = np.abs(predictions_test[0][0])
+    h2Cap = np.abs(predictions_test[0][1])
+    xeUptake = np.abs(predictions_test[0][2])
     logKH = predictions_test[0][3]
-    uptakeLP = predictions_test[0][4]
-    bandGap = predictions_test[0][5]
+    uptakeLP = np.abs(predictions_test[0][4])
+    bandGap = np.abs(predictions_test[0][5])
 
     percentage = 15
 

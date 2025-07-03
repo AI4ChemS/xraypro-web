@@ -197,7 +197,7 @@ def recommend(model, loader):
     uptakeLP = predictions_test[0][4]
     bandGap = predictions_test[0][5]
 
-    percentage = 20
+    percentage = 17
 
     recommendationClass['CH4 storage'] = f"Promising ({np.round(uptakeHP*(1 + percentage/100), 2)} mol/kg)" if uptakeHP*(1 + percentage/100) >= thresholds['CH4Storage'] else f"Not Promising ({np.round(uptakeHP*(1 + percentage/100), 2)} mol/kg)"
     recommendationClass['H2 storage'] = f"Promising ({np.round(h2Cap*(1 + percentage/100), 2)} g/L)" if h2Cap*(1 + percentage/100) >= thresholds['H2Storage'] else f"Not Promising ({np.round(h2Cap*(1 + percentage/100), 2)} g/L)"

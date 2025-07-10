@@ -28,12 +28,13 @@ Our web app tool does **NOT** store any data that is inputted into the entry fie
 ## Citation
 If our work is used, please cite us with the following BibTeX entry:
 ```bibtex
-@article{khan2024connecting,
-  title = {Connecting metal-organic framework synthesis to applications with a self-supervised multimodal model},
-  author = {Khan, Sartaaj Takrim and Moosavi, Seyed Mohamad},
-  year = {2024},
-  journal = {ChemRxiv},
-  doi = {10.26434/chemrxiv-2024-mq9b4},
-  url = {https://chemrxiv.org/engage/chemrxiv/article-details/671a9d9783f22e42140f2df6},
-  note = {Preprint, not peer-reviewed}
+@article{khan2025connecting,
+  title={Connecting metal-organic framework synthesis to applications using multimodal machine learning},
+  author={Khan, Sartaaj Takrim and Moosavi, Seyed Mohamad},
+  journal={Nature Communications},
+  volume={16},
+  number={1},
+  pages={5642},
+  year={2025},
+  publisher={Nature Publishing Group UK London}
 }

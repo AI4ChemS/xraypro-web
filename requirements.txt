@@ -10,5 +10,6 @@ streamlit==1.39.0
 pdf2image==1.17.0
 requests==2.32.3
 plotly
-transformers
+transformers==4.48.3
 scikit-learn
+

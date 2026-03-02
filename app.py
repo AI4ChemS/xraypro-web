@@ -302,7 +302,7 @@ st.markdown("""
 
 model_selection = st.sidebar.radio(
     "What property are you interested in?",
-    ("CH$_4$ uptake at HP (mol/kg)", "CO$_2$ uptake at LP (mol/kg)", "Surface area (m$^2$/m$^3$)", "log(K$_H$) of CO$_2$", "Crystal density (g/cm$^3$)", "H$_2$ storage capacity (g/L)", "Band gap (eV)", "Di")
+    ("CH$_4$ uptake at HP (mol/kg)", "CO$_2$ uptake at LP (mol/kg)", "Surface area (m$^2$/cm$^3$)", "log(K$_H$) of CO$_2$", "Crystal density (g/cm$^3$)", "H$_2$ storage capacity (g/L)", "Band gap (eV)", "Di")
 )
 
 mode_selection = st.sidebar.radio(

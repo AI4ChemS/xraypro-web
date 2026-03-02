@@ -5,6 +5,7 @@ import numpy as np
 
 from xraypro.xraypro import loadModel
 from utils.transform_pxrd import transformPXRD
+from scipy.signal import savgol_filter, find_peaks
 import matplotlib.pyplot as plt
 
 from xraypro.MOFormer_modded.dataset_recc import MOF_ID_Dataset
@@ -18,11 +19,6 @@ import os
 from xraypro.xrayRec import loadMulti
 from xraypro.MOFormer_modded.dataset_multi import MOF_ID_Dataset_Multi
 import requests
-from sklearn.manifold import TSNE
-import pickle
-import plotly.express as px
-import plotly.graph_objects as go
-from scipy.spatial import KDTree
 
 WEIGHTS_URL = "https://drive.google.com/drive/folders/1Yw_7y3NBrzjKt3H-jHRm7ZaCu0AZNjPA"
 
@@ -38,10 +34,29 @@ def load_model(model_path):
         model.eval()
         return model
 
+def denoise_pxrd(twotheta, intensity, shift=0.15):
+    """
+    added in to denoise noisy PXRDs
+    """
+    denoised = savgol_filter(intensity, 11, 3)
+
+    window = 50 
+    background = np.array([np.min(denoised[i:i+window]) for i in range(len(denoised)-window)])
+    background = np.pad(background, (0, window), 'edge')
+
+    clean_int = denoised - background
+    clean_int = np.maximum(clean_int, 0)
+    clean_theta = twotheta - shift
+    
+    clean_int /= np.max(clean_int)    
+    return clean_theta, clean_int
+
 def xy_to_vector(path_to_xy):
     data = np.loadtxt(path_to_xy, skiprows=1)
     print(data)
     x, y = data[:, 0], data[:, 1]
+    x, y = denoise_pxrd(x, y) #added in
+
     concat_data = np.array([x, y])
     y_t = transformPXRD(concat_data, two_theta_bound=(0, 40))
     return y_t
@@ -190,183 +205,23 @@ def recommend(model, loader):
                            'Band gap' : None
                            }
     
-    uptakeHP = np.abs(predictions_test[0][0])
-    h2Cap = np.abs(predictions_test[0][1])
-    xeUptake = np.abs(predictions_test[0][2])
+    uptakeHP = predictions_test[0][0]
+    h2Cap = predictions_test[0][1]
+    xeUptake = predictions_test[0][2]
     logKH = predictions_test[0][3]
-    uptakeLP = np.abs(predictions_test[0][4])
-    bandGap = np.abs(predictions_test[0][5])
+    uptakeLP = predictions_test[0][4]
+    bandGap = predictions_test[0][5]
 
-    percentage = 20
+    percentage = 15
 
-    recommendationClass['CH4 storage'] = f"Promising ({np.round(uptakeHP*(1 + percentage/100), 2)} mol/kg)" if uptakeHP*(1 + percentage/100) >= thresholds['CH4Storage'] else f"Not Promising ({np.round(uptakeHP*(1 + percentage/100), 2)} mol/kg)"
-    recommendationClass['H2 storage'] = f"Promising ({np.round(h2Cap*(1 + percentage/100), 2)} g/L)" if h2Cap*(1 + percentage/100) >= thresholds['H2Storage'] else f"Not Promising ({np.round(h2Cap*(1 + percentage/100), 2)} g/L)"
-    recommendationClass['Xe storage'] = f"Promising ({np.round(xeUptake*(1 + percentage/100), 2)} mol/kg)" if xeUptake*(1 + percentage/100) >= thresholds['XeStorage'] else f"Not Promising ({np.round(xeUptake*(1 + percentage/100), 2)} mol/kg)"
-    recommendationClass['DAC'] = f"Promising ({np.round(logKH*(1 - percentage/100), 2)} logKH)" if logKH*(1 - percentage/100) >= thresholds['DAC'] else f"Not promising ({np.round(logKH*(1 - percentage/100), 2)} logKH)"
-    recommendationClass['Carbon capture'] = f"Promising ({np.round(uptakeLP*(1 + percentage/100), 2)} mol/kg)" if uptakeLP*(1 + percentage/100) >= thresholds['CCapture'] else f"Not promising ({np.round(uptakeLP*(1 + percentage/100), 2)} mol/kg)"
-    recommendationClass['Band gap'] = f"Promising ({np.round(bandGap*(1 - percentage/100), 2)} eV)" if bandGap*(1 - percentage/100) <= thresholds['BandGap'] else f"Not Promising ({np.round(bandGap*(1 - percentage/100), 2)} eV)"
+    recommendationClass['CH4 storage'] = "Promising" if uptakeHP*(1 + percentage/100) >= thresholds['CH4Storage'] else "Not promising"
+    recommendationClass['H2 storage'] = "Promising" if h2Cap*(1 + percentage/100) >= thresholds['H2Storage'] else "Not promising"
+    recommendationClass['Xe storage'] = "Promising" if xeUptake*(1 + percentage/100) >= thresholds['XeStorage'] else "Not promising"
+    recommendationClass['DAC'] = "Promising" if logKH*(1 - percentage/100) >= thresholds['DAC'] else "Not promising"
+    recommendationClass['Carbon capture'] = "Promising" if uptakeLP*(1 + percentage/100) >= thresholds['CCapture'] else "Not promising"
+    recommendationClass['Band gap'] = "Promising" if bandGap*(1 - percentage/100) <= thresholds['BandGap'] else "Not promising"
 
     return recommendationClass
-
-def load_space():
-    with open('tSNE/all_outputs.pickle', 'rb') as handle:
-        all_outputs = pickle.load(handle)
-    with open('tSNE/all_actual.pickle', 'rb') as handle:
-        all_actual = pickle.load(handle)
-    with open('tSNE/all_regr.pickle', 'rb') as handle:
-        all_regr = pickle.load(handle)
-    with open('tSNE/all_di.pickle', 'rb') as handle:
-        all_di = pickle.load(handle)
-    with open('tSNE/all_rho.pickle', 'rb') as handle:
-        all_rho = pickle.load(handle)
-    with open('tSNE/all_en.pickle', 'rb') as handle:
-        all_en = pickle.load(handle)
-    
-    thresholds = yaml.load(open("weights/thresholds.yaml", "r"), Loader=yaml.FullLoader)
-    embeddings_tsne = np.load('tSNE/embedding_space.npy')
-
-    badMOF_col = 'lightgrey'
-    row_indices = {'darkturquoise' : [], 'teal' : [], 'mediumspringgreen' : [], 'magenta' : [], 'darkmagenta' : [], badMOF_col : []}
-
-    for bn, row in enumerate(all_regr):
-        if row[0] >= thresholds['CH4Storage']:
-            #colors.append('red')
-            row_indices['darkturquoise'].append(bn)
-
-        if row[1] >= thresholds['H2Storage']:
-            #colors.append('blue')
-            row_indices['teal'].append(bn)
-
-        if row[2] >= thresholds['XeStorage']:
-            #colors.append('green')
-            row_indices['mediumspringgreen'].append(bn)
-
-        if row[4] >= thresholds['CCapture']:
-            #colors.append('purple')
-            row_indices['magenta'].append(bn)
-        
-        if row[3] >= thresholds['DAC']:
-            #colors.append('orange')
-            row_indices['darkmagenta'].append(bn)
-
-        if (row[0] < thresholds['CH4Storage']) and (row[1] < thresholds['H2Storage']) and (row[2] < thresholds['XeStorage']) and (row[3] < thresholds['DAC']) and (row[4] < thresholds['CCapture']):
-            row_indices[badMOF_col].append(bn)
-
-    return embeddings_tsne, all_outputs, all_regr, row_indices, all_di, all_rho, all_en
-
-def interpolate_property(embeddings_tsne, new_point, all_di):
-    tree = KDTree(embeddings_tsne)
-    distances, indices = tree.query(new_point, k=5)
-    weights = 1 / (distances + 1e-8)
-    new_point_di = np.sum(weights * all_di[indices]) / np.sum(weights)
-
-    return new_point_di
-
-def tSNE_embedding(model, loader):
-    if torch.cuda.is_available():
-        device = 'cuda:0'
-    else:
-        device = 'cpu'
-
-    with torch.no_grad():
-        predictions_test = []
-        actual_test = []
-
-        for bn, (input1, input2, target) in enumerate(loader):
-            target = target[:, :6]
-            input2 = input2.unsqueeze(1).to(device)
-            input1 = input1.to(device)
-            output = model.model(input2, input1)
-            
-            pred_temp, actual_temp = [], []
-            for i, j in zip(output.cpu().detach().numpy(), target.cpu().detach().numpy()):
-                pred_temp.append(i)
-                actual_temp.append(j)
-            
-            predictions_test.append(pred_temp)
-            actual_test.append(actual_temp)
-
-        predictions_test = np.concatenate(np.array(predictions_test), axis = 0)
-        actual_test = np.concatenate(np.array(actual_test), axis = 0)
-    
-    #predictions_test is the new point to be added
-    _, all_outputs, all_regr, row_indices, all_di, all_rho, all_en = load_space()
-
-    X_with_new = np.vstack([all_outputs, predictions_test])
-    tsne = TSNE(n_components=2, perplexity=30, random_state=42)
-    X_tsne = tsne.fit_transform(X_with_new)
-
-    original_points = X_tsne[:-1]
-    new_point_tsne = X_tsne[-1]
-    badMOF_col = 'lightgrey'
-
-    unique_colors = {'darkturquoise': 'CH$_4$ storage', 'teal': 'H$_2$ storage', 'mediumspringgreen': 'Xe storage', 
-                 'magenta' : 'Carbon capture','darkmagenta' : 'DAC'} 
-    fig = go.Figure()
-
-    data = np.stack((all_di[row_indices[badMOF_col]], all_rho[row_indices[badMOF_col]], all_en[row_indices[badMOF_col]]), axis=1)
-    fig.add_trace(go.Scatter(
-        x=original_points[row_indices[badMOF_col], 0],
-        y=original_points[row_indices[badMOF_col], 1],
-        mode='markers',
-        marker=dict(size=7, color=badMOF_col, opacity=0.3),
-        hovertemplate=(
-                f'Application: Nothing interesting<br>'
-            'Pore Diameter: %{customdata[0]:.2f} Å<br>'
-            'Metal EN: %{customdata[2]:.2f}<br>'
-            'Density: %{customdata[1]:.2f} g/cm³<extra></extra>'
-            ),
-            customdata=data,
-        name='Nothing interesting',
-        showlegend=True
-    ))
-
-    # Add data points for other categories with jittered positions
-    noise_std = 4
-    for i, (colour, indices) in enumerate(row_indices.items()):
-        if colour != badMOF_col:
-            data = np.stack((all_di[row_indices[colour]], all_rho[row_indices[colour]], all_en[row_indices[colour]]), axis=1)
-
-            fig.add_trace(go.Scatter(
-                x=original_points[indices, 0] + np.random.normal(0, noise_std / (i + 1), len(indices)),
-                y=original_points[indices, 1] + np.random.normal(0, noise_std / (i + 1), len(indices)),
-                mode='markers',
-                marker=dict(size=7, color=colour, symbol='square', opacity=1),
-                hovertemplate=(
-                f'Application: {unique_colors[colour]}<br>'
-            'Pore Diameter: %{customdata[0]:.2f} Å<br>'
-            'Metal EN: %{customdata[2]:.2f}<br>'
-            'Density: %{customdata[1]:.2f} g/cm³<extra></extra>'
-            ),
-            customdata=data,
-                name=unique_colors[colour],
-                showlegend=True
-            ))
-    
-    pore_diameter_interpolate = interpolate_property(embeddings_tsne=original_points, new_point = new_point_tsne, all_di = all_di) #use KDTree to interpolate
-    density_interpolate = interpolate_property(embeddings_tsne=original_points, new_point = new_point_tsne, all_di = all_rho)
-
-    star_point = new_point_tsne.copy()
-    fig.add_trace(go.Scatter(
-        x=[star_point[0]],
-        y=[star_point[1]],
-        mode='markers',
-        marker=dict(size=20, color='red', symbol='star'),
-        hovertemplate=f'Interpolated Pore Diameter: {pore_diameter_interpolate:.2f} Å<br>'
-        f'Interpolated Density: {density_interpolate:.2f} g/cm³<extra></extra>',
-        name='Your MOF!'
-    ))
-
-    fig.update_layout(
-        width=1200,  # 21 inches * 100 pixels/inch
-        height=550,  # 13 inches * 100 pixels/inch
-        xaxis=dict(visible=False),
-        yaxis=dict(visible=False),
-        margin=dict(l=0, r=0, t=0, b=0),  # No margins
-    )
-
-    st.plotly_chart(fig)
-
 
 st.title("XRayPro: Connecting metal-organic framework synthesis to applications with a self-supervised multimodal model")
 
@@ -433,10 +288,10 @@ st.markdown(button_style, unsafe_allow_html=True)
 
 st.markdown("""
     <div class="container">
-        <a href="https://chemrxiv.org/engage/chemrxiv/article-details/671a9d9783f22e42140f2df6" class="button">
+        <a href="https://arxiv.org" class="button">
             <img src="https://upload.wikimedia.org/wikipedia/commons/7/7a/ArXiv_logo_2022.png"> arXiv
         </a>
-        <a href="https://shorturl.at/TXLu7" class="button">
+        <a href="" class="button">
             <img src="https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg"> PDF
         </a>
         <a href="https://github.com/AI4ChemS/XRayPro" class="button">
@@ -447,7 +302,7 @@ st.markdown("""
 
 model_selection = st.sidebar.radio(
     "What property are you interested in?",
-    ("CH$_4$ uptake at HP (mol/kg)", "CO$_2$ uptake at LP (mol/kg)", "Surface area (m$^2$/m$^3$)", "log(K$_H$) of CO$_2$", "Crystal density (g/cm$^3$)", "H$_2$ storage capacity (g/L)", "Band gap (eV)")
+    ("CH$_4$ uptake at HP (mol/kg)", "CO$_2$ uptake at LP (mol/kg)", "Surface area (m$^2$/m$^3$)", "log(K$_H$) of CO$_2$", "Crystal density (g/cm$^3$)", "H$_2$ storage capacity (g/L)", "Band gap (eV)", "Di")
 )
 
 mode_selection = st.sidebar.radio(
@@ -457,11 +312,12 @@ mode_selection = st.sidebar.radio(
 
 weightNames = {"CH$_4$ uptake at HP (mol/kg)" : "ft_CH4_Uptake_HP.h5",
                "CO$_2$ uptake at LP (mol/kg)" : "ft_CO2_Uptake_LP.h5",
-               "Surface area (m$^2$/m$^3$)" : "ft_SA.h5",
+               "Surface area (m$^2$/cm$^3$)" : "ft_SA.h5",
                "log(K$_H$) of CO$_2$" : "ft_logKH.h5",
                "Crystal density (g/cm$^3$)" : "ft_density.h5",
                "H$_2$ storage capacity (g/L)" : "ft_H2_val.h5",
-               "Band gap (eV)" : "ft_BG.h5"
+               "Band gap (eV)" : "ft_BG.h5",
+               "Di" : "ft_LISD.h5"
                }
 
 if mode_selection == "No" or mode_selection == "None":
@@ -500,6 +356,11 @@ if mode_selection == "No" or mode_selection == "None":
         st.write(f"You selected {model_selection}")
         modelPath = f"weights/{weightNames[model_selection]}"
         model = load_model(model_path=modelPath)
+    
+    elif model_selection == "Di":
+        st.write(f"You selected {model_selection}")
+        modelPath = f"weights/{weightNames[model_selection]}"
+        model = load_model(model_path=modelPath)
 
     uploaded_file = st.file_uploader("Upload your .xy file", type = ["xy"])
     input_precursor = st.text_input("Enter precursor")
@@ -517,7 +378,7 @@ if mode_selection == "No" or mode_selection == "None":
         
         if st.button('Make prediction'):
             output = predict(model, loader)
-            st.write(f"Prediction for {model_selection}: ", output)
+            st.write("Prediction: ", output)
 
 elif mode_selection == "Yes":
     st.write("Recommendation system is active.")
@@ -541,21 +402,6 @@ elif mode_selection == "Yes":
         if st.button('What applications are good for my MOF?'):
             recs = recommend(model, loader)
             st.write(recs)
-
-            tSNE_embedding(model, loader)
-
-zip_file_path = "examples/MOF5.zip"
-
-# Read the zip file as binary data
-with open(zip_file_path, "rb") as f:
-    zip_data = f.read()
-
-st.download_button(
-    label="Try out MOF-5!",
-    data=zip_data,
-    file_name="MOF5.zip",  # Use the appropriate file name for download
-    mime="application/zip"
-)
 
 st.title("Overview of the model")
 
@@ -588,14 +434,14 @@ st.image(pdf_path, caption = 'Radar plot', use_column_width = True)
 st.title("Citation")
 
 bibtex_entry = """
-@article{khan2024connecting,
-  title = {Connecting metal-organic framework synthesis to applications with a self-supervised multimodal model},
-  author = {Khan, Sartaaj Takrim and Moosavi, Seyed Mohamad},
-  year = {2024},
-  journal = {ChemRxiv},
-  doi = {10.26434/chemrxiv-2024-mq9b4},
-  url = {https://chemrxiv.org/engage/chemrxiv/article-details/671a9d9783f22e42140f2df6},
-  note = {Preprint, not peer-reviewed}
+@article{XRayPro,
+  title={Connecting metal-organic framework synthesis to applications with a self-supervised multimodal model},
+  author={Sartaaj Khan and Seyed Mohamad Moosavi},
+  journal={journalName},
+  year={2024},
+  volume={volumeName},
+  pages={pagesOfJournal},
+  publisher={publisherName}
 }
 """
 

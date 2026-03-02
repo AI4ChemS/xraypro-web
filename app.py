@@ -55,7 +55,7 @@ def xy_to_vector(path_to_xy):
     data = np.loadtxt(path_to_xy, skiprows=1)
     print(data)
     x, y = data[:, 0], data[:, 1]
-    #x, y = denoise_pxrd(x, y) #added in
+    x, y = denoise_pxrd(x, y) #added in
 
     concat_data = np.array([x, y])
     y_t = transformPXRD(concat_data, two_theta_bound=(0, 40))
@@ -332,7 +332,7 @@ if mode_selection == "No" or mode_selection == "None":
         modelPath = f"weights/{weightNames[model_selection]}"
         model = load_model(model_path=modelPath)
 
-    elif model_selection == "Surface area (m$^2$/m$^3$)":
+    elif model_selection == "Surface area (m$^2$/cm$^3$)":
         st.write(f"You selected {model_selection}")
         modelPath = f"weights/{weightNames[model_selection]}"
         model = load_model(model_path=modelPath)

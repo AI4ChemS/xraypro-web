@@ -214,12 +214,18 @@ def recommend(model, loader):
 
     percentage = 15
 
-    recommendationClass['CH4 storage'] = "Promising" if uptakeHP*(1 + percentage/100) >= thresholds['CH4Storage'] else "Not promising"
-    recommendationClass['H2 storage'] = "Promising" if h2Cap*(1 + percentage/100) >= thresholds['H2Storage'] else "Not promising"
-    recommendationClass['Xe storage'] = "Promising" if xeUptake*(1 + percentage/100) >= thresholds['XeStorage'] else "Not promising"
-    recommendationClass['DAC'] = "Promising" if logKH*(1 - percentage/100) >= thresholds['DAC'] else "Not promising"
-    recommendationClass['Carbon capture'] = "Promising" if uptakeLP*(1 + percentage/100) >= thresholds['CCapture'] else "Not promising"
-    recommendationClass['Band gap'] = "Promising" if bandGap*(1 - percentage/100) <= thresholds['BandGap'] else "Not promising"
+    #recommendationClass['CH4 storage'] = "Promising" if uptakeHP*(1 + percentage/100) >= thresholds['CH4Storage'] else "Not promising"
+    #recommendationClass['H2 storage'] = "Promising" if h2Cap*(1 + percentage/100) >= thresholds['H2Storage'] else "Not promising"
+    #recommendationClass['Xe storage'] = "Promising" if xeUptake*(1 + percentage/100) >= thresholds['XeStorage'] else "Not promising"
+    #recommendationClass['DAC'] = "Promising" if logKH*(1 - percentage/100) >= thresholds['DAC'] else "Not promising"
+    #recommendationClass['Carbon capture'] = "Promising" if uptakeLP*(1 + percentage/100) >= thresholds['CCapture'] else "Not promising"
+    #recommendationClass['Band gap'] = "Promising" if bandGap*(1 - percentage/100) <= thresholds['BandGap'] else "Not promising"
+    recommendationClass['CH4 storage'] = f"Promising ({uptakeHP*(1 + percentage/100)})" if uptakeHP*(1 + percentage/100) >= thresholds['CH4Storage'] else f"Not promising ({uptakeHP*(1 + percentage/100)})"
+    recommendationClass['H2 storage'] = f"Promising ({h2Cap*(1 + percentage/100)})" if h2Cap*(1 + percentage/100) >= thresholds['H2Storage'] else f"Not promising ({h2Cap*(1 + percentage/100)})"
+    recommendationClass['Xe storage'] = f"Promising ({xeUptake*(1 + percentage/100)})" if xeUptake*(1 + percentage/100) >= thresholds['XeStorage'] else f"Not promising ({xeUptake*(1 + percentage/100)})"
+    recommendationClass['DAC'] = f"Promising ({logKH*(1 - percentage/100)})" if logKH*(1 - percentage/100) >= thresholds['DAC'] else f"Not promising ({logKH*(1 - percentage/100)})"
+    recommendationClass['Carbon capture'] = f"Promising ({uptakeLP*(1 + percentage/100)})" if uptakeLP*(1 + percentage/100) >= thresholds['CCapture'] else f"Not promising ({uptakeLP*(1 + percentage/100)})"
+    recommendationClass['Band gap'] = f"Promising ({bandGap*(1 - percentage/100)})" if bandGap*(1 - percentage/100) <= thresholds['BandGap'] else f"Not promising ({bandGap*(1 - percentage/100)})"
 
     return recommendationClass
 
